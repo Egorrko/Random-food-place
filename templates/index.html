@@ -1,22 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-    <title>Document</title>
-</head>
-<body>
-    <h3>Не можешь выбрать где поесть?<br>Введи свой город, найди {{ config.PLACES_COUNT }} абослютно случайных кафе/ресторанов и выбирай уже из них!</h3>
+{% extends "base.html" %}
+
+{% block title %} Случайные места {% endblock%}
+
+{%block content%}
+    <h4>Не можешь выбрать где поесть?<br>Введи свой город, найди {{ config.PLACES_COUNT }} абсолютно случайных кафе/рестораны и выбирай уже из них!</h4>
     <form action="/" method="POST">
-        <input type="text" name="city" id="city", placeholder="Город">
-        <input type="submit" value="Поиск">
+        <div class="input-group w-50">
+            <input type="text" class="form-control" name="city" placeholder="Город">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <output name="countShow">5 штук</output>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <input class="form-range" type="range" name="count" min="5" max="50" value="5" step="5" oninput="this.form.countShow.value=this.value + ' штук'"/>
+                </li>
+            </ul>
+            <button type="submit" class="btn btn-primary">Поиск</button>
+        </div>
     </form>
     {% if alert_text %}
         <p class="alert">
             {{ alert_text }}
         </p>
     {% endif %}
-</body>
-</html>
+{% endblock%}
