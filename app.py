@@ -12,16 +12,15 @@ app = Flask(__name__)
 @app.route("/", methods=['GET', 'POST'])
 def index():
     if request.method == "POST":
-        city = request.form["city"]
-        if not re.match("^[A-Za-zА-Яа-я- ]*$", city):  # check if city name is valid
-            return render_template('index.html', alert_text="Wrong city name", config=config)  # if not - display error
-        return redirect(url_for('city', city=city))
+        return redirect(url_for('city', city=request.form["city"]))
     else:
         return render_template('index.html', config=config)
 
 
 @app.route("/city/<string:city>")
 def city(city):
+    if not re.match("^[A-Za-zА-ЯёЁа-я- ]*$", city):  # check if city name is valid
+        return render_template('index.html', alert_text="Wrong city name", config=config)  # if not - display error
     places = get_places(city)
     if not places or len(places) == 1:
         return render_template('index.html', alert_text=places[0], config=config)  # if error
@@ -30,7 +29,8 @@ def city(city):
 
 def get_places(city):
     # returns list of places or error
-    url = f"https://search-maps.yandex.ru/v1/?text={city},Еда&type=biz&results=500&lang=ru_RU&apikey={config.API_KEY}"
+    url = (f"https://search-maps.yandex.ru/v1/?text={city},Еда&"
+           f"type=biz&results=500&lang=ru_RU&apikey={config.PLACES_API_KEY}")
     r = requests.get(url)
     # get places using Yandex API
     if r.status_code != 200: return [r.text]  # error
@@ -39,10 +39,18 @@ def get_places(city):
     json_places = choices(data["features"], k=config.PLACES_COUNT)
 
     places = []
+    center = [0, 0]
     for place in json_places:
         categories = " ".join([category['name'] for category in place['properties']['CompanyMetaData']['Categories']])
         # create string of categories
-        places.append((place['properties']['name'], categories, place['properties']['description']))
+        coordinates = place['geometry']['coordinates'][::-1]
+        center[0] += coordinates[0]
+        center[1] += coordinates[1]
+        # calculate center between points
+        places.append([place['properties']['name'], categories, place['properties']['description'], coordinates])
+    center[0] /= len(json_places)
+    center[1] /= len(json_places)
+    places.append(center)
     return(places)
 
 
