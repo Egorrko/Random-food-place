@@ -1,6 +1,6 @@
 import json
 import re
-from random import choices
+from random import sample
 import requests
 from flask import Flask, render_template, redirect, url_for, request
 import config
@@ -36,21 +36,14 @@ def get_places(city):
     if r.status_code != 200: return [r.text]  # error
     data = json.loads(r.text)
     if len(data["features"]) < config.PLACES_COUNT: return ['Places not found']  # places not found
-    json_places = choices(data["features"], k=config.PLACES_COUNT)
+    json_places = sample(data["features"], k=config.PLACES_COUNT)
 
     places = []
-    center = [0, 0]
     for place in json_places:
         categories = " ".join([category['name'] for category in place['properties']['CompanyMetaData']['Categories']])
         # create string of categories
         coordinates = place['geometry']['coordinates'][::-1]
-        center[0] += coordinates[0]
-        center[1] += coordinates[1]
-        # calculate center between points
         places.append([place['properties']['name'], categories, place['properties']['description'], coordinates])
-    center[0] /= len(json_places)
-    center[1] /= len(json_places)
-    places.append(center)
     return(places)
 
 
